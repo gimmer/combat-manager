@@ -22,7 +22,7 @@
        data-toggle="table"
        data-sort-name="initiative"
        data-sort-order="desc"
-       data-unique-id="name",
+       data-unique-id="name"
        data-row-style="addRowClass"
 >
     <thead>
@@ -38,8 +38,10 @@
 
     </tbody>
 </table>
+<!-- setup buttons for out of combat -->
 <button id="newPlayer" class="btn btn-warning setup-button" data-toggle="modal" data-target="#addPlayer">Add Player</button>
 <button id="newNPC" class="btn btn-info setup-button" data-toggle="modal" data-target="#addNPC">Add NPC</button>
+<button id="healEveryone" class="btn btn-secondary">Heal To Max</button>
 <button id="startCombat" class="btn btn-success setup-button">Start Combat</button>
 <hr class="setup-button" />
 <button data-save-type="party" class="btn btn-primary setup-button save-button">Save Party</button>
@@ -47,10 +49,11 @@
 <button data-delete-type="party" class="btn btn-danger setup-button delete-button">Delete Party</button>
 <button data-delete-type="npcs" class="btn btn-danger setup-button delete-button">Delete NPCs</button>
 
+<!-- Combat control buttons -->
 <button data-action-type="damage" class="btn btn-danger combat-button action-button">Attack</button>
 <button data-action-type="heal" class="btn btn-success combat-button action-button">Heal</button>
 <button class="btn btn-warning combat-button" id="endTurn">End Turn</button>
-<hr class="combat-button">
+<hr class="combat-button" />
 <button id="endCombat" class="btn btn-info combat-button">End Combat</button>
 
 
@@ -218,6 +221,16 @@
     function addRowClass(row, index){
         return {classes:'edit-click'}
     }
+
+    $('#healEveryone').on('click', function(e){
+        e.preventDefault();
+        var table = $('#myTable');
+       $.each(party, function(k,v){
+            var row = table.bootstrapTable('getRowByUniqueId',v);
+            table.bootstrapTable('updateCellByUniqueId',{'id':v,'field':'currentHP','value':row.maxHP})
+       });
+       updateThing('party');
+    });
 
     $('#editEntityButton').on('click', function(e){
         var name = $('#entityName').val();
