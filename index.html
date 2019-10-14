@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Combat Manager</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.4/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+    <style type="text/css">
+        .combat-active{
+            background-color: LightGray;
+        }
+        .combat-button {
+            display:none;
+        }
+    </style>
+</head>
+<body>
+
+<table id="myTable"
+       class="table"
+       data-toggle="table"
+       data-sort-name="initiative"
+       data-sort-order="desc"
+       data-unique-id="name",
+       data-row-style="addRowClass"
+>
+    <thead>
+        <tr>
+            <th data-field="initiative">Initiative</th>
+            <th data-field="name">Name</th>
+            <th data-field="currentHP">Current HP</th>
+            <th data-field="maxHP">Max HP</th>
+            <th data-field="notes">Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+
+    </tbody>
+</table>
+<button id="newPlayer" class="btn btn-warning setup-button" data-toggle="modal" data-target="#addPlayer">Add Player</button>
+<button id="newNPC" class="btn btn-info setup-button" data-toggle="modal" data-target="#addNPC">Add NPC</button>
+<button id="startCombat" class="btn btn-success setup-button">Start Combat</button>
+<hr class="setup-button" />
+<button data-save-type="party" class="btn btn-primary setup-button save-button">Save Party</button>
+<button data-save-type="npcs" class="btn btn-primary setup-button save-button">Save NPCs</button>
+<button data-delete-type="party" class="btn btn-danger setup-button delete-button">Delete Party</button>
+<button data-delete-type="npcs" class="btn btn-danger setup-button delete-button">Delete NPCs</button>
+
+<button data-action-type="damage" class="btn btn-danger combat-button action-button">Attack</button>
+<button data-action-type="heal" class="btn btn-success combat-button action-button">Heal</button>
+<button class="btn btn-warning combat-button" id="endTurn">End Turn</button>
+<hr class="combat-button">
+<button id="endCombat" class="btn btn-info combat-button">End Combat</button>
+
+
+
+<!-- Modal -->
+<div class="modal" id="addPlayer" tabindex="-1" role="dialog" aria-labelledby="addPlayerLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPlayerLabel">Create Player Character</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="newPlayerForm" action="#" method="get">
+                    <div class="form-row">
+                        <div class="col">
+                            <input type="text" class="form-control" name="name" id="playerName" placeholder="Character Name" />
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" name="currentHP" id="playerCurrentHP" placeholder="Current HP" />
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" name="maxHP" id="playerMaxHP" placeholder="Max HP" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="addPlayerActionButton" type="button" class="btn btn-primary">Add Player Character</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="editEntity" tabindex="-1" role="dialog" aria-labelledby="addPlayerLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="entityNameHeader" class="modal-title">Edit Entry</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" action="#" method="get">
+                    <input type="hidden" name="entityName" id="entityName" value="" />
+                    <div class="form-row">
+                        <div class="col">
+                            <label for="entityNotes">Notes:</label>
+                            <input type="text" class="form-control" name="entityNotes" id="entityNotes" placeholder="Entity Notes" />
+                        </div>
+                        <div class="col">
+                            <label for="entityInitiative">Initiative:</label>
+                            <input type="text" class="form-control" name="entityInitiative" id="entityInitiative" placeholder="Entity Initiative" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="col">
+                            <label for="entityCurrentHP">Current HP:</label>
+                            <input type="text" class="form-control" name="currentHP" id="entityCurrentHP" placeholder="Current HP" />
+                        </div>
+                        <div class="col">
+                            <label for="entityMaxHP">Max HP:</label>
+                            <input type="text" class="form-control" name="maxHP" id="entityMaxHP" placeholder="Max HP" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="deleteEntityButton" type="button" class="btn btn-danger">Delete</button>
+                <button id="editEntityButton" type="button" class="btn btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal" id="addNPC" tabindex="-1" role="dialog" aria-labelledby="addNPCLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNPCLabel">Add NPCs</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="newNPCForm" action="#" method="get">
+                    <div class="form-row">
+                        <div class="col">
+                            <input type="text" class="form-control" name="name" id="NPCName" placeholder="Character Name" />
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" name="quantity" id="NPCQuantity" placeholder="# of same thing" />
+                        </div>
+
+                    </div>
+                    <div class="form-row">
+                        <div class="col">
+                            <input type="text" class="form-control" name="npcHP" id="npcHP" placeholder="Hit point number or dice roll" />
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" name="initiativeMod" id="initiativeMod" placeholder="Initiative Modifier" />
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button id="addNPCActionButton" type="button" class="btn btn-primary">Add NPC</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="action" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 id="actionTitle" class="modal-title">Placeholder</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="actionForm">
+                    <input type="hidden" name="actionType" id="actionType" value="">
+                    <div class="form-row">
+                        <div class="col">
+                            <input name="actionValue" id="actionValue" placeholder="">
+                        </div>
+                        <div class="col">
+                            <select id="targetSelect" class="selectpicker" multiple data-live-search="true">
+
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row attack-only-options">
+                        <div class="col">
+                            <label for="resistanceInput">Resistant?</label>
+                            <input name="resistance" id="resistanceInput" type="checkbox">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="actionButton" type="button" class="btn btn-primary">Placeholder</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-table@1.15.4/dist/bootstrap-table.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+<script type="text/javascript">
+    function addRowClass(row, index){
+        return {classes:'edit-click'}
+    }
+
+    $('#editEntityButton').on('click', function(e){
+        var name = $('#entityName').val();
+        var character = {'name':name,'currentHP':$('#entityCurrentHP').val(),'maxHP':$('#entityMaxHP').val(),'initiative':$('#entityInitiative').val(),'notes':$('#entityNotes').val()};
+        var row = {'id':name,'row':character};
+        $('#myTable').bootstrapTable('updateByUniqueId', row, true);
+        $('#editEntity').modal('hide');
+        var thing = (party.indexOf(name) > -1 ? 'party' : 'npcs');
+        updateThing(thing);
+        refreshOnClick();
+    });
+
+    $('#deleteEntityButton').on('click', function(e){
+       e.preventDefault();
+       var name = $('#entityName').val();
+       var thing = (party.indexOf(name) > -1 ? 'party' : 'npcs');
+       removeFromThing(thing,name);
+       window.location.reload();
+    });
+
+    $('.action-button').on('click', function(e){
+        e.preventDefault();
+        var actionType = $(this).data('action-type');
+        var actionButton = $('#actionButton');
+        var actionValueInput = $('#actionValue');
+        var actionTitle = $('#actionTitle');
+        var targetSelect = $('#targetSelect');
+        var actionTypeInput = $('#actionType');
+        var resistanceInput = $('#resistanceInput');
+        resistanceInput.prop('checked', false);
+        targetSelect.empty();
+        var localParty = party.sort();
+        var localNPCs = npcs.sort();
+        var order = [];
+        actionValueInput.val('');
+        if(actionType == 'heal'){
+            $('.attack-only-options').hide();
+            $('.heal-only-options').show();
+            actionButton.html('Heal');
+            actionTitle.html('Choose Healing Target(s)');
+            actionValueInput.prop('placeholder','Roll or Dice for Heal Value');
+            if(party.indexOf(currentActor) > -1){
+                order.push(localParty);
+                order.push(localNPCs);
+            }
+            else{
+                order.push(localNPCs);
+                order.push(localParty);
+            }
+            $.each(order, function(k, orderArray){
+                $.each(orderArray, function(sk,v){
+                    targetSelect.append('<option value="'+v+'">'+v+'</option>')
+                });
+            });
+        }
+        else{
+            if(party.indexOf(currentActor) > -1){
+                order.push(localNPCs);
+                order.push(localParty);
+            }
+            else{
+                order.push(localParty);
+                order.push(localNPCs);
+            }
+            $('.attack-only-options').show();
+            $('.heal-only-options').hide();
+            actionButton.html('Attack');
+            actionTitle.html('Choose Attack Target(s)');
+            actionValueInput.prop('placeholder','Roll or Dice for Damage Value');
+            $.each(order, function(k, orderArray){
+                $.each(orderArray, function(sk,v){
+                    targetSelect.append('<option value="'+v+'">'+v+'</option>')
+                });
+            });
+        }
+        actionTypeInput.val(actionType);
+        targetSelect.selectpicker('refresh');
+
+        $('#action').modal('show');
+    });
+
+    $('#endCombat').on('click', function(e){
+        e.preventDefault();
+        inCombat = false;
+        currentActor = undefined;
+        $('.combat-button').hide();
+        $('.setup-button').show();
+        $('.combat-active').removeClass('combat-active');
+
+    });
+
+    $('#actionButton').on('click', function(e){
+        e.preventDefault();
+        var actionType = $('#actionType').val();
+
+        //Determine effect type
+        var actionValue = $('#actionValue').val();
+        if(actionValue.includes('d')){
+            actionValue = resolveDiceRoll(actionValue);
+        }
+        //Don't proceed if you get an invalid value
+        if(isNaN(actionValue)){
+            alert('Invalid entry for roll');
+            return false;
+        }
+
+        //Targets
+        var targets = $('#targetSelect').val();
+        if(targets.length == 0){
+            alert('Choose a target!');
+            return false;
+        }
+
+        //get Damage specific effects
+        if(actionType == 'damage'){
+            if($('#resistanceInput').prop('checked')){
+                actionValue = Math.floor(actionValue / 2);
+            }
+        }
+        else{
+            //Heal specific effects here.
+        }
+
+        var table = $('#myTable');
+        $.each(targets, function(k,target){
+             var actor = table.bootstrapTable('getRowByUniqueId',target);
+             if(actionType == 'damage'){
+                 var currentHP = parseInt(actor.currentHP);
+                 currentHP -= actionValue;
+                 if(currentHP < 0){
+                     currentHP = 0;
+                 }
+                 table.bootstrapTable('updateCellByUniqueId',{'id':actor.name,'field':'currentHP','value':currentHP})
+             }
+             else{
+                 var currentHP = parseInt(actor.currentHP);
+                 currentHP += actionValue;
+                 if(currentHP > parseInt(actor.maxHP)){
+                     currentHP = parseInt(actor.maxHP);
+                 }
+                 table.bootstrapTable('updateCellByUniqueId',{'id':actor.name,'field':'currentHP','value':currentHP})
+             }
+        });
+        var row = table.find('tbody > tr[data-uniqueid="'+currentActor+'"]');
+        row.addClass('combat-active');
+        $('#action').modal('hide');
+    });
+
+
+    $('#addPlayerActionButton').on('click', function(e){
+        e.preventDefault();
+        //Get values from the form and validate
+        var array = $('#newPlayerForm').serializeArray();
+        var valid = true;
+        var character = {};
+        $.each(array, function(k,v){
+            if(v['value'].length == 0){
+                valid = false;
+            }
+            else if(v['name'].includes('HP') && typeof parseInt(v['value']) != 'number'){
+                valid = false;
+            }
+            else{
+                character[v['name']] = v['value'];
+            }
+        });
+
+        if(valid){
+            //Deal with duplicate names
+            if(names.indexOf(character.name) > -1){
+                character.name += " "+(names.length+1).toString();
+            }
+            character.initiative = 0;
+            appendThing('party',character);
+            addRow(character,'player');
+            $('#addPlayer').modal('hide');
+            $('#playerCurrentHP').val('');
+            $('#playerMaxHP').val('');
+            $('#playerName').val('');
+        }
+        else{
+            alert('Input incorrect');
+        }
+    });
+
+
+    $('#addNPCActionButton').on('click', function(e){
+       e.preventDefault();
+       var valid = true;
+       var name = $('#NPCName').val();
+       if(name.length == 0){
+           valid = false;
+       }
+
+       var quantity = parseInt($('#NPCQuantity').val());
+       if(typeof quantity != 'number'){
+           valid = false;
+       }
+
+       var npcHP = $('#npcHP').val();
+       var npcHPType = 'number';
+       if(npcHP.includes('d')){
+           npcHPType = 'random';
+       }
+       if(npcHPType == 'number'){
+           npcHP = parseInt(npcHP);
+           if(isNaN(npcHP)){
+               valid = false;
+           }
+       }
+       else{
+           var testVal = resolveDiceRoll(npcHP);
+           if(testVal === 0){
+               valid = false;
+           }
+       }
+
+       var initiativeMod = parseInt($('#initiativeMod').val());
+        if(isNaN(initiativeMod)){
+            valid = false;
+        }
+
+        if(valid){
+            for(var i = 0;i<quantity;i++){
+                var npc = {};
+                npc.name = name + " #"+(i+1).toString();
+                if(npcHPType == 'number'){
+                    npc.currentHP = npcHP;
+                    npc.maxHP = npcHP;
+                }
+                else{
+                    var createdHP = resolveDiceRoll(npcHP);
+                    npc.currentHP = createdHP;
+                    npc.maxHP = createdHP;
+                }
+                if(names.indexOf(npc.name) > -1){
+                    npc.name += " "+(names.length + 1).toString();
+                }
+                var operator = (initiativeMod > 0 ? "+" : "");
+                npc.initiative = resolveDiceRoll('1d20'+operator+initiativeMod.toString());
+                appendThing('npcs',npc);
+                addRow(npc,'npc');
+                $('#addNPC').modal('hide');
+                //clear values;
+                $('#NPCName').val('');
+                $('#NPCQuantity').val('');
+                $('#initiativeMod').val('');
+                $('#npcHP').val('');
+            }
+        }
+        else{
+            alert("NPC WHOOPS");
+        }
+
+    });
+
+    $('.delete-button').on('click', function(e){
+       e.preventDefault();
+       var thing = $(this).data('delete-type');
+       if(confirm("Are you sure? You can't take this back")){
+           deleteThing(thing);
+           window.location.reload();
+       }
+    });
+
+    $('.save-button').on('click', function(e){
+        e.preventDefault();
+        var thing = $(this).data('save-type');
+        updateThing(thing);
+    });
+
+    inCombat = false;
+    $('#startCombat').on('click', function(e){
+        if(inCombat){
+            return false;
+        }
+       e.preventDefault();
+        //Zero out existing initiative for party members, this should be a new fight
+        var myTable = $('#myTable');
+        $.each(party, function(k,name){
+            myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':0});
+        });
+
+       $.each(names, function(k,name){
+           var row = $('#myTable').bootstrapTable('getRowByUniqueId',name);
+           var initiative = parseInt(row.initiative);
+          if(initiative === 0){
+              while(isNaN(initiative) || parseInt(initiative) <= 0){
+                  initiative = parseInt(prompt("Enter initiative for "+name));
+              }
+              myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':initiative});
+          }
+       });
+
+       //with initiative set, refresh party status
+        updateThing('party');
+        updateThing('npcs');
+
+        $('.setup-button').hide();
+        $('.combat-button').show();
+        inCombat = true;
+
+        //Start the turn of who's in first
+        startTurn(determineWhoGoesNext(myTable));
+    });
+
+    $('#endTurn').on('click', function(e){
+       e.preventDefault();
+       updateThing('party');
+       updateThing('npcs');
+       startTurn(determineWhoGoesNext($('#myTable'),currentActor));
+    });
+
+    currentActor = false;
+    function startTurn(obj){
+        var row = obj.row;
+        var character = obj.character;
+        $('.combat-active').removeClass('combat-active');
+        row.addClass('combat-active');
+        currentActor = character.name;
+    }
+
+    function determineWhoGoesNext(myTable, previousName){
+        var obj = {};
+        var row;
+        if(previousName === undefined){
+            row = myTable.find('tbody > tr[data-index="0"]');
+        }
+        else{
+            row = myTable.find('tbody > tr[data-uniqueid="'+previousName+'"]');
+            var nextIndex = parseInt(row.data('index'));
+            nextIndex++;
+            row = myTable.find('tbody > tr[data-index="'+nextIndex.toString()+'"]');
+            if(row.length == 0){
+                row = myTable.find('tbody > tr[data-index="0"]');
+            }
+        }
+        obj['row'] = row;
+        var name = row.data('uniqueid');
+        obj['character'] = myTable.bootstrapTable('getRowByUniqueId',name);
+
+        //If the character's currentHP is 0, and it's an NPC, skip the turn
+        if(parseInt(obj['character'].currentHP) == 0 && npcs.indexOf(name) > -1){
+            obj = determineWhoGoesNext(myTable, name)
+        }
+
+        return obj;
+    }
+
+    function resolveDiceRoll(rollValue) {
+        var match = /^(\d+)?d(\d+)([+-]\d+)?$/.exec(rollValue);
+        if (!match) {
+            return 0
+        }
+
+        var howMany = (typeof match[1] == 'undefined') ? 1 : parseInt(match[1]);
+        var dieSize = parseInt(match[2]);
+        var modifier = (typeof match[3] == 'undefined') ? 0 : parseInt(match[3]);
+
+        var total = 0; //Total starts as 0
+
+        for (var i = 0; i < howMany; i++) { //Loop a number of times equal to the number of dice
+            total += Math.floor(Math.random() * dieSize) + 1; //Random number between 1 and diesize
+        }
+        total += modifier; //Add the modifier
+
+        return total; //Return the final total
+    }
+
+    names = [];
+    party = [];
+    npcs = [];
+    function addRow(character, type) {
+        names.push(character.name);
+        if(type == 'player'){
+            party.push(character.name);
+        }
+        else{
+            npcs.push(character.name);
+        }
+        $('#myTable').bootstrapTable('append',character);
+    }
+
+
+    function saveThing(thing, obj) {
+        localStorage.setItem(thing,JSON.stringify(obj));
+    }
+
+    function appendThing(thing, obj) {
+        var list = loadThing(thing);
+        list.push(obj);
+        saveThing(thing,list);
+    }
+
+    function loadThing(thing) {
+        var list =  JSON.parse(localStorage.getItem(thing));
+        if(!list){
+            list = [];
+        }
+        return list;
+    }
+
+    function deleteThing(thing) {
+        window[thing] = [];
+        localStorage.removeItem(thing);
+    }
+
+    function removeFromThing(thing, name) {
+        var thingArray = loadThing(thing);
+        var foundIt = false;
+        $.each(thingArray, function(index, v){
+           if(v.name == name){
+               thingArray.splice(index,1);
+               foundIt = true;
+                return false;
+           }
+        });
+        if(foundIt){
+            saveThing(thing,thingArray);
+            window.location.reload();
+        }
+    }
+
+    function updateThing(thing){
+        var newList = [];
+        var table = $('#myTable');
+        $.each(window[thing], function(k,v){
+            newList.push(table.bootstrapTable('getRowByUniqueId',v));
+        });
+        saveThing(thing,newList);
+    }
+
+    function refreshOnClick(){
+        $('.edit-click').on('click', function(e){
+            e.preventDefault();
+            var character = $('#myTable').bootstrapTable('getRowByUniqueId',$(this).data('uniqueid'));
+            $('#entityNameHeader').html(character.name);
+            $('#entityName').val(character.name);
+            $('#entityCurrentHP').val(character.currentHP);
+            $('#entityMaxHP').val(character.maxHP);
+            $('#entityNotes').val(character.notes);
+            $('#entityInitiative').val(character.initiative);
+            $('#editEntity').modal('show');
+        });
+    }
+
+
+    //Load both monsters and players
+    $(document).ready(function(e){
+         var characters = loadThing('party');
+         $.each(characters, function(k,v){
+             addRow(v,'player');
+        });
+
+        var monsters = loadThing('npcs');
+        $.each(monsters, function(k,v){
+            addRow(v,'npc');
+        });
+
+        refreshOnClick();
+
+    });
+
+</script>
+
+</html>
