@@ -319,7 +319,8 @@
         $('.combat-button').hide();
         $('.setup-button').show();
         $('.combat-active').removeClass('combat-active');
-
+        updateThing('party');
+        updateThing('npcs');
     });
 
     $('#actionButton').on('click', function(e){
@@ -328,7 +329,9 @@
 
         //Determine effect type
         var actionValue = $('#actionValue').val();
+        var rolled = false;
         if(actionValue.includes('d')){
+            rolled = true;
             actionValue = resolveDiceRoll(actionValue);
         }
         //Don't proceed if you get an invalid value
@@ -336,6 +339,8 @@
             alert('Invalid entry for roll');
             return false;
         }
+
+        actionValue = parseInt(actionValue);
 
         //Targets
         var targets = $('#targetSelect').val();
@@ -357,8 +362,8 @@
         var table = $('#myTable');
         $.each(targets, function(k,target){
              var actor = table.bootstrapTable('getRowByUniqueId',target);
-             if(actionType == 'damage'){
-                 var currentHP = parseInt(actor.currentHP);
+             var currentHP = parseInt(actor.currentHP);
+             if(actionType === 'damage'){
                  currentHP -= actionValue;
                  if(currentHP < 0){
                      currentHP = 0;
@@ -366,7 +371,6 @@
                  table.bootstrapTable('updateCellByUniqueId',{'id':actor.name,'field':'currentHP','value':currentHP})
              }
              else{
-                 var currentHP = parseInt(actor.currentHP);
                  currentHP += actionValue;
                  if(currentHP > parseInt(actor.maxHP)){
                      currentHP = parseInt(actor.maxHP);
@@ -377,6 +381,9 @@
         var row = table.find('tbody > tr[data-uniqueid="'+currentActor+'"]');
         row.addClass('combat-active');
         $('#action').modal('hide');
+        if(rolled){
+            alert("Did "+actionValue.toString()+" points of "+(actionType === 'damage' ? 'damage' : 'healing'));
+        }
     });
 
 
