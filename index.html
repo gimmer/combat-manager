@@ -41,13 +41,13 @@
 <!-- setup buttons for out of combat -->
 <button id="newPlayer" class="btn btn-warning setup-button" data-toggle="modal" data-target="#addPlayer">Add Player</button>
 <button id="newNPC" class="btn btn-info setup-button" data-toggle="modal" data-target="#addNPC">Add NPC</button>
-<button id="healEveryone" class="btn btn-secondary">Heal To Max</button>
+<button id="healEveryone" class="btn btn-secondary setup-button">Heal To Max</button>
 <button id="startCombat" class="btn btn-success setup-button">Start Combat</button>
 <hr class="setup-button" />
-<button data-save-type="party" class="btn btn-primary setup-button save-button">Save Party</button>
-<button data-save-type="npcs" class="btn btn-primary setup-button save-button">Save NPCs</button>
-<button data-delete-type="party" class="btn btn-danger setup-button delete-button">Delete Party</button>
-<button data-delete-type="npcs" class="btn btn-danger setup-button delete-button">Delete NPCs</button>
+<button data-save-type="player" class="btn btn-primary setup-button save-button">Save Party</button>
+<button data-save-type="npc" class="btn btn-primary setup-button save-button">Save NPCs</button>
+<button data-delete-type="player" class="btn btn-danger setup-button delete-button">Delete Party</button>
+<button data-delete-type="npc" class="btn btn-danger setup-button delete-button">Delete NPCs</button>
 
 <!-- Combat control buttons -->
 <button data-action-type="damage" class="btn btn-danger combat-button action-button">Attack</button>
@@ -225,29 +225,33 @@
     $('#healEveryone').on('click', function(e){
         e.preventDefault();
         var table = $('#myTable');
-       $.each(party, function(k,v){
-            var row = table.bootstrapTable('getRowByUniqueId',v);
-            table.bootstrapTable('updateCellByUniqueId',{'id':v,'field':'currentHP','value':row.maxHP})
-       });
-       updateThing('party');
+        
+        const keys = Object.keys(actors);
+        $.each(keys, function(k,name){
+            var actor = actors[name];
+            if(actor.type == 'player'){
+                var row = table.bootstrapTable('getRowByUniqueId',name);
+                table.bootstrapTable('updateCellByUniqueId',{'id':v,'field':'currentHP','value':row.maxHP})
+            }
+        });
+
+       updateThing('player');
     });
 
     $('#editEntityButton').on('click', function(e){
         var name = $('#entityName').val();
         var character = {'name':name,'currentHP':$('#entityCurrentHP').val(),'maxHP':$('#entityMaxHP').val(),'initiative':$('#entityInitiative').val(),'notes':$('#entityNotes').val()};
+        var existingCharacter = actors[name];
         var row = {'id':name,'row':character};
         $('#myTable').bootstrapTable('updateByUniqueId', row, true);
         $('#editEntity').modal('hide');
-        var thing = (party.indexOf(name) > -1 ? 'party' : 'npcs');
-        updateThing(thing);
-        refreshOnClick();
+        updateThing(existingCharacter.type);
     });
 
     $('#deleteEntityButton').on('click', function(e){
        e.preventDefault();
        var name = $('#entityName').val();
-       var thing = (party.indexOf(name) > -1 ? 'party' : 'npcs');
-       removeFromThing(thing,name);
+       removeFromThing(actors[name].type,name);
        window.location.reload();
     });
 
@@ -262,8 +266,21 @@
         var resistanceInput = $('#resistanceInput');
         resistanceInput.prop('checked', false);
         targetSelect.empty();
-        var localParty = party.sort();
-        var localNPCs = npcs.sort();
+        var localPlayers = [];
+        var localNPCs = [];
+
+        const keys = Object.keys(actors);
+        $.each(keys, function(k, name){
+            var actor = actors[name];
+            if(actor.type == 'player'){
+                localPlayers.push(name);
+            }
+            else{
+                localNPCs.push(name);
+            }
+        });
+        localPlayers = localPlayers.sort();
+        localNPCs = localNPCs.sort();
         var order = [];
         actionValueInput.val('');
         if(actionType == 'heal'){
@@ -272,13 +289,14 @@
             actionButton.html('Heal');
             actionTitle.html('Choose Healing Target(s)');
             actionValueInput.prop('placeholder','Roll or Dice for Heal Value');
-            if(party.indexOf(currentActor) > -1){
-                order.push(localParty);
+            if(actors[currentActor].type == 'player'){
+                order.push(localPlayers);
                 order.push(localNPCs);
             }
             else{
                 order.push(localNPCs);
-                order.push(localParty);
+                order.push(localPlayers);
+                actionValueInput.val(actors[currentActor].lastRoll);
             }
             $.each(order, function(k, orderArray){
                 $.each(orderArray, function(sk,v){
@@ -287,12 +305,12 @@
             });
         }
         else{
-            if(party.indexOf(currentActor) > -1){
+            if(actors[currentActor].type == 'player'){
                 order.push(localNPCs);
-                order.push(localParty);
+                order.push(localPlayers);
             }
             else{
-                order.push(localParty);
+                order.push(localPlayers);
                 order.push(localNPCs);
             }
             $('.attack-only-options').show();
@@ -319,8 +337,8 @@
         $('.combat-button').hide();
         $('.setup-button').show();
         $('.combat-active').removeClass('combat-active');
-        updateThing('party');
-        updateThing('npcs');
+        updateThing('player');
+        updateThing('npc');
     });
 
     $('#actionButton').on('click', function(e){
@@ -411,11 +429,11 @@
 
         if(valid){
             //Deal with duplicate names
-            if(names.indexOf(character.name) > -1){
-                character.name += " "+(names.length+1).toString();
+            if(actors.indexOf(character.name) > -1){
+                character.name += " "+(actors.length+1).toString();
             }
             character.initiative = 0;
-            appendThing('party',character);
+            appendThing('player',character);
             addRow(character,'player');
             $('#addPlayer').modal('hide');
             $('#playerCurrentHP').val('');
@@ -477,12 +495,12 @@
                     npc.currentHP = createdHP;
                     npc.maxHP = createdHP;
                 }
-                if(names.indexOf(npc.name) > -1){
-                    npc.name += " "+(names.length + 1).toString();
+                if(actors.indexOf(npc.name) > -1){
+                    npc.name += " "+(actors.length + 1).toString();
                 }
                 var operator = (initiativeMod > 0 ? "+" : "");
                 npc.initiative = resolveDiceRoll('1d20'+operator+initiativeMod.toString());
-                appendThing('npcs',npc);
+                appendThing('npc',npc);
                 addRow(npc,'npc');
                 $('#addNPC').modal('hide');
                 //clear values;
@@ -521,24 +539,28 @@
        e.preventDefault();
         //Zero out existing initiative for party members, this should be a new fight
         var myTable = $('#myTable');
-        $.each(party, function(k,name){
-            myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':0});
+        const keys = Object.keys(actors);
+        $.each(keys, function(k,name){
+            var actor = actors[name];
+            if(actor.type == 'player'){
+                myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':0});
+            }
         });
 
-       $.each(names, function(k,name){
-           var row = $('#myTable').bootstrapTable('getRowByUniqueId',name);
-           var initiative = parseInt(row.initiative);
-          if(initiative === 0){
-              while(isNaN(initiative) || parseInt(initiative) <= 0){
-                  initiative = parseInt(prompt("Enter initiative for "+name));
-              }
-              myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':initiative});
-          }
+       $.each(keys, function(k,name){
+            var row = $('#myTable').bootstrapTable('getRowByUniqueId',name);
+            var initiative = parseInt(row.initiative);
+            if(initiative === 0){
+                while(isNaN(initiative) || parseInt(initiative) <= 0){
+                    initiative = parseInt(prompt("Enter initiative for "+name));
+                }
+                myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':initiative});
+            }
        });
 
        //with initiative set, refresh party status
-        updateThing('party');
-        updateThing('npcs');
+        updateThing('player');
+        updateThing('npc');
 
         $('.setup-button').hide();
         $('.combat-button').show();
@@ -550,8 +572,8 @@
 
     $('#endTurn').on('click', function(e){
        e.preventDefault();
-       updateThing('party');
-       updateThing('npcs');
+       updateThing('player');
+       updateThing('npc');
        startTurn(determineWhoGoesNext($('#myTable'),currentActor));
     });
 
@@ -581,10 +603,11 @@
         }
         obj['row'] = row;
         var name = row.data('uniqueid');
+        var character = actors[name];
         obj['character'] = myTable.bootstrapTable('getRowByUniqueId',name);
 
         //If the character's currentHP is 0, and it's an NPC, skip the turn
-        if(parseInt(obj['character'].currentHP) == 0 && npcs.indexOf(name) > -1){
+        if(parseInt(obj['character'].currentHP) == 0 && character.type == 'npc'){
             obj = determineWhoGoesNext(myTable, name)
         }
 
@@ -616,18 +639,16 @@
         return total; //Return the final total
     }
 
-    names = [];
-    party = [];
-    npcs = [];
+    actors = [];
     function addRow(character, type) {
-        names.push(character.name);
-        if(type == 'player'){
-            party.push(character.name);
-        }
-        else{
-            npcs.push(character.name);
-        }
+        actors[character.name] = new Actor(character, type);
         $('#myTable').bootstrapTable('append',character);
+    }
+
+    var Actor = function(rowData, type){
+        this.rowData = rowData;
+        this.type = type;
+        this.lastRoll = '';
     }
 
 
@@ -650,7 +671,6 @@
     }
 
     function deleteThing(thing) {
-        window[thing] = [];
         localStorage.removeItem(thing);
     }
 
@@ -673,8 +693,13 @@
     function updateThing(thing){
         var newList = [];
         var table = $('#myTable');
-        $.each(window[thing], function(k,v){
-            newList.push(table.bootstrapTable('getRowByUniqueId',v));
+        
+        const keys = Object.keys(actors);
+        $.each(keys, function(k,name){
+            var actor = actors[name];
+            if(actor.type == thing){
+                newList.push(table.bootstrapTable('getRowByUniqueId',name));
+            }
         });
         saveThing(thing,newList);
     }
@@ -703,16 +728,18 @@
 
     //Load both monsters and players
     $(document).ready(function(e){
-         var characters = loadThing('party');
+         var characters = loadThing('player');
          $.each(characters, function(k,v){
              addRow(v,'player');
         });
 
-        var monsters = loadThing('npcs');
+        var monsters = loadThing('npc');
         $.each(monsters, function(k,v){
             addRow(v,'npc');
         });
     });
+
+
 
 </script>
 
