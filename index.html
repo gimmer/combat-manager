@@ -330,7 +330,7 @@
         //Determine effect type
         var actionValue = $('#actionValue').val();
         var rolled = false;
-        if(actionValue.includes('d')){
+        if(actionValue.includes('d') || actionValue.includes("+")){
             rolled = true;
             actionValue = resolveDiceRoll(actionValue);
         }
@@ -594,8 +594,13 @@
     function resolveDiceRoll(rollValue) {
         var match = /^(\d+)?d(\d+)([+-]\d+)?$/.exec(rollValue);
         if (!match) {
-            return 0
+            var answer = eval(rollValue);
+            if(answer > 0){
+                return answer;
+            }
+            return 0;
         }
+        
 
         var howMany = (typeof match[1] == 'undefined') ? 1 : parseInt(match[1]);
         var dieSize = parseInt(match[2]);
