@@ -378,13 +378,17 @@
                  table.bootstrapTable('updateCellByUniqueId',{'id':actor.name,'field':'currentHP','value':currentHP})
              }
         });
-        var row = table.find('tbody > tr[data-uniqueid="'+currentActor+'"]');
-        row.addClass('combat-active');
+        activateRowOfCurrentActor();
         $('#action').modal('hide');
         if(rolled){
             alert("Did "+actionValue.toString()+" points of "+(actionType === 'damage' ? 'damage' : 'healing'));
         }
     });
+
+    function activateRowOfCurrentActor(){
+        var row = $('#myTable').find('tbody > tr[data-uniqueid="'+currentActor+'"]');
+        row.addClass('combat-active'); 
+    }
 
 
     $('#addPlayerActionButton').on('click', function(e){
@@ -684,6 +688,13 @@
         });
     }
 
+    $(document).on('reset-view.bs.table', function(e){
+        if(inCombat){
+            activateRowOfCurrentActor();
+        }
+        refreshOnClick();
+    });
+
 
     //Load both monsters and players
     $(document).ready(function(e){
@@ -696,9 +707,6 @@
         $.each(monsters, function(k,v){
             addRow(v,'npc');
         });
-
-        refreshOnClick();
-
     });
 
 </script>
