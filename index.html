@@ -264,6 +264,7 @@
         var targetSelect = $('#targetSelect');
         var actionTypeInput = $('#actionType');
         var resistanceInput = $('#resistanceInput');
+        var lastRoll = actors[currentActor]['lastRoll'];
         resistanceInput.prop('checked', false);
         targetSelect.empty();
         var localPlayers = [];
@@ -283,6 +284,9 @@
         localNPCs = localNPCs.sort();
         var order = [];
         actionValueInput.val('');
+        if(lastRoll.length > 0){
+            actionValueInput.val(lastRoll);
+        }
         if(actionType == 'heal'){
             $('.attack-only-options').hide();
             $('.heal-only-options').show();
@@ -349,7 +353,7 @@
         var actionValue = $('#actionValue').val();
         var rolled = false;
         if(actionValue.includes('d') || actionValue.includes("+")){
-            rolled = true;
+            rolled = actionValue;
             actionValue = resolveDiceRoll(actionValue);
         }
         //Don't proceed if you get an invalid value
@@ -399,6 +403,7 @@
         activateRowOfCurrentActor();
         $('#action').modal('hide');
         if(rolled){
+            actors[currentActor]['lastRoll'] = rolled;
             alert("Did "+actionValue.toString()+" points of "+(actionType === 'damage' ? 'damage' : 'healing'));
         }
     });
