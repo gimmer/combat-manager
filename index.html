@@ -229,9 +229,9 @@
         const keys = Object.keys(actors);
         $.each(keys, function(k,name){
             var actor = actors[name];
-            if(actor.type == 'player'){
+            if(actor.type === 'player'){
                 var row = table.bootstrapTable('getRowByUniqueId',name);
-                table.bootstrapTable('updateCellByUniqueId',{'id':v,'field':'currentHP','value':row.maxHP})
+                table.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'currentHP','value':row.maxHP})
             }
         });
 
@@ -273,7 +273,7 @@
         const keys = Object.keys(actors);
         $.each(keys, function(k, name){
             var actor = actors[name];
-            if(actor.type == 'player'){
+            if(actor.type === 'player'){
                 localPlayers.push(name);
             }
             else{
@@ -287,13 +287,13 @@
         if(lastRoll.length > 0){
             actionValueInput.val(lastRoll);
         }
-        if(actionType == 'heal'){
+        if(actionType === 'heal'){
             $('.attack-only-options').hide();
             $('.heal-only-options').show();
             actionButton.html('Heal');
             actionTitle.html('Choose Healing Target(s)');
             actionValueInput.prop('placeholder','Roll or Dice for Heal Value');
-            if(actors[currentActor].type == 'player'){
+            if(actors[currentActor].type === 'player'){
                 order.push(localPlayers);
                 order.push(localNPCs);
             }
@@ -309,7 +309,7 @@
             });
         }
         else{
-            if(actors[currentActor].type == 'player'){
+            if(actors[currentActor].type === 'player'){
                 order.push(localNPCs);
                 order.push(localPlayers);
             }
@@ -366,13 +366,13 @@
 
         //Targets
         var targets = $('#targetSelect').val();
-        if(targets.length == 0){
+        if(targets.length === 0){
             alert('Choose a target!');
             return false;
         }
 
         //get Damage specific effects
-        if(actionType == 'damage'){
+        if(actionType === 'damage'){
             if($('#resistanceInput').prop('checked')){
                 actionValue = Math.floor(actionValue / 2);
             }
@@ -421,7 +421,7 @@
         var valid = true;
         var character = {};
         $.each(array, function(k,v){
-            if(v['value'].length == 0){
+            if(v['value'].length === 0){
                 valid = false;
             }
             else if(v['name'].includes('HP') && typeof parseInt(v['value']) != 'number'){
@@ -469,7 +469,7 @@
        if(npcHP.includes('d')){
            npcHPType = 'random';
        }
-       if(npcHPType == 'number'){
+       if(npcHPType === 'number'){
            npcHP = parseInt(npcHP);
            if(isNaN(npcHP)){
                valid = false;
@@ -491,7 +491,7 @@
             for(var i = 0;i<quantity;i++){
                 var npc = {};
                 npc.name = name + " #"+(i+1).toString();
-                if(npcHPType == 'number'){
+                if(npcHPType === 'number'){
                     npc.currentHP = npcHP;
                     npc.maxHP = npcHP;
                 }
@@ -547,7 +547,7 @@
         const keys = Object.keys(actors);
         $.each(keys, function(k,name){
             var actor = actors[name];
-            if(actor.type == 'player'){
+            if(actor.type === 'player'){
                 myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':0});
             }
         });
@@ -602,7 +602,7 @@
             var nextIndex = parseInt(row.data('index'));
             nextIndex++;
             row = myTable.find('tbody > tr[data-index="'+nextIndex.toString()+'"]');
-            if(row.length == 0){
+            if(row.length === 0){
                 row = myTable.find('tbody > tr[data-index="0"]');
             }
         }
@@ -612,7 +612,7 @@
         obj['character'] = myTable.bootstrapTable('getRowByUniqueId',name);
 
         //If the character's currentHP is 0, and it's an NPC, skip the turn
-        if(parseInt(obj['character'].currentHP) == 0 && character.type == 'npc'){
+        if(parseInt(obj['character'].currentHP) === 0 && character.type === 'npc'){
             obj = determineWhoGoesNext(myTable, name)
         }
 
@@ -654,7 +654,7 @@
         this.rowData = rowData;
         this.type = type;
         this.lastRoll = '';
-    }
+    };
 
 
     function saveThing(thing, obj) {
