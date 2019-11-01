@@ -190,6 +190,7 @@
                             <input name="actionValue" id="actionValue" placeholder="">
                         </div>
                         <div class="col">
+                            <label for="targetSelect">Targets:</label>
                             <select id="targetSelect" class="selectpicker" multiple data-live-search="true">
 
                             </select>
@@ -199,6 +200,12 @@
                         <div class="col">
                             <label for="resistanceInput">Resistant?</label>
                             <input name="resistance" id="resistanceInput" type="checkbox">
+                        </div>
+                        <div class="col">
+                            <label for="halfDamageTargetSelect">Half Damage Targets:</label>
+                            <select id="halfDamageTargetSelect" class="selectpicker" multiple data-live-search="true">
+
+                            </select>
                         </div>
                     </div>
                 </form>
@@ -309,6 +316,8 @@
             });
         }
         else{
+            var halfDamageTargetSelect = $('#halfDamageTargetSelect');
+            halfDamageTargetSelect.empty();
             if(actors[currentActor].type === 'player'){
                 order.push(localNPCs);
                 order.push(localPlayers);
@@ -324,12 +333,14 @@
             actionValueInput.prop('placeholder','Roll or Dice for Damage Value');
             $.each(order, function(k, orderArray){
                 $.each(orderArray, function(sk,v){
-                    targetSelect.append('<option value="'+v+'">'+v+'</option>')
+                    targetSelect.append('<option value="'+v+'">'+v+'</option>');
+                    halfDamageTargetSelect.append('<option value="'+v+'">'+v+'</option>');
                 });
             });
         }
         actionTypeInput.val(actionType);
         targetSelect.selectpicker('refresh');
+        halfDamageTargetSelect.selectpicker('refresh');
 
         $('#action').modal('show');
     });
@@ -366,7 +377,8 @@
 
         //Targets
         var targets = $('#targetSelect').val();
-        if(targets.length === 0){
+        var halfDamageTargets = $('#halfDamageTargetSelect').val();
+        if(targets.length === 0 && halfDamageTargets.length === 0){
             alert('Choose a target!');
             return false;
         }
@@ -400,6 +412,18 @@
                  table.bootstrapTable('updateCellByUniqueId',{'id':actor.name,'field':'currentHP','value':currentHP})
              }
         });
+
+        //Half damage targets for passed saving throughs of half damage attacks
+        $.each(halfDamageTargets, function(k,target){
+            var actor = table.bootstrapTable('getRowByUniqueId',target);
+            var currentHP = parseInt(actor.currentHP);
+                currentHP -= Math.floor(actionValue / 2);
+                if(currentHP < 0){
+                    currentHP = 0;
+                }
+                table.bootstrapTable('updateCellByUniqueId',{'id':actor.name,'field':'currentHP','value':currentHP})
+        });
+
         activateRowOfCurrentActor();
         $('#action').modal('hide');
         if(rolled){
