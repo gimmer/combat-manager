@@ -340,7 +340,10 @@
         }
         actionTypeInput.val(actionType);
         targetSelect.selectpicker('refresh');
-        halfDamageTargetSelect.selectpicker('refresh');
+        if(actionType !== 'heal'){
+            halfDamageTargetSelect.selectpicker('refresh');
+        }
+
 
         $('#action').modal('show');
     });
