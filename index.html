@@ -42,7 +42,8 @@
 <button id="newPlayer" class="btn btn-warning setup-button" data-toggle="modal" data-target="#addPlayer">Add Player</button>
 <button id="newNPC" class="btn btn-info setup-button" data-toggle="modal" data-target="#addNPC">Add NPC</button>
 <button id="healEveryone" class="btn btn-secondary setup-button">Heal To Max</button>
-<button id="startCombat" class="btn btn-success setup-button">Start Combat</button>
+<button data-fresh="1" class="btn btn-success setup-button startCombat">Start Combat</button>
+<button data-fresh="0" class="btn btn-success setup-button startCombat">Resume Combat</button>
 <hr class="setup-button" />
 <button data-save-type="player" class="btn btn-primary setup-button save-button">Save Party</button>
 <button data-save-type="npc" class="btn btn-primary setup-button save-button">Save NPCs</button>
@@ -530,7 +531,7 @@
                 if(actors.indexOf(npc.name) > -1){
                     npc.name += " "+(actors.length + 1).toString();
                 }
-                var operator = (initiativeMod > 0 ? "+" : "");
+                var operator = (initiativeMod >= 0 ? "+" : "");
                 npc.initiative = resolveDiceRoll('1d20'+operator+initiativeMod.toString());
                 appendThing('npc',npc);
                 addRow(npc,'npc');
@@ -564,31 +565,33 @@
     });
 
     inCombat = false;
-    $('#startCombat').on('click', function(e){
+    $('.startCombat').on('click', function(e){
         if(inCombat){
             return false;
         }
        e.preventDefault();
-        //Zero out existing initiative for party members, this should be a new fight
-        var myTable = $('#myTable');
-        const keys = Object.keys(actors);
-        $.each(keys, function(k,name){
-            var actor = actors[name];
-            if(actor.type === 'player'){
-                myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':0});
-            }
-        });
-
-       $.each(keys, function(k,name){
-            var row = $('#myTable').bootstrapTable('getRowByUniqueId',name);
-            var initiative = parseInt(row.initiative);
-            if(initiative === 0){
-                while(isNaN(initiative) || parseInt(initiative) <= 0){
-                    initiative = parseInt(prompt("Enter initiative for "+name));
+        let myTable = $('#myTable');
+        if($(this).data('fresh') == 1){
+            //Zero out existing initiative for party members, this should be a new fight
+            const keys = Object.keys(actors);
+            $.each(keys, function(k,name){
+                var actor = actors[name];
+                if(actor.type === 'player'){
+                    myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':0});
                 }
-                myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':initiative});
-            }
-       });
+            });
+
+            $.each(keys, function(k,name){
+                var row = $('#myTable').bootstrapTable('getRowByUniqueId',name);
+                var initiative = parseInt(row.initiative);
+                if(initiative === 0){
+                    while(isNaN(initiative) || parseInt(initiative) <= 0){
+                        initiative = parseInt(prompt("Enter initiative for "+name));
+                    }
+                    myTable.bootstrapTable('updateCellByUniqueId',{'id':name,'field':'initiative', 'value':initiative});
+                }
+            });
+        }
 
        //with initiative set, refresh party status
         updateThing('player');
