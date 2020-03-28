@@ -49,6 +49,12 @@
 <button data-save-type="npc" class="btn btn-primary setup-button save-button">Save NPCs</button>
 <button data-delete-type="player" class="btn btn-danger setup-button delete-button">Delete Party</button>
 <button data-delete-type="npc" class="btn btn-danger setup-button delete-button">Delete NPCs</button>
+<button id="loadParty" class="btn btn-warning setup-button">Load Party</button>
+<select id="saveSlot" class="setup-button">
+    <option value="1">Slot 1</option>
+    <option value="2">Slot 2</option>
+    <option value="3">Slot 3</option>
+</select>
 
 <!-- Combat control buttons -->
 <button data-action-type="damage" class="btn btn-danger combat-button action-button">Attack</button>
@@ -260,7 +266,6 @@
        e.preventDefault();
        var name = $('#entityName').val();
        removeFromThing(actors[name].type,name);
-       window.location.reload();
     });
 
     $('.action-button').on('click', function(e){
@@ -478,6 +483,15 @@
         }
     });
 
+    $('#loadParty').on('click', function(e){
+       e.preventDefault();
+        $('#myTable').bootstrapTable('load', []);
+        let characters = loadThing('player');
+        $.each(characters, function(k,v){
+            addRow(v,'player');
+        });
+    });
+
 
     $('#addNPCActionButton').on('click', function(e){
        e.preventDefault();
@@ -688,7 +702,8 @@
 
 
     function saveThing(thing, obj) {
-        localStorage.setItem(thing,JSON.stringify(obj));
+        let saveSlot = $('#saveSlot').val();
+        localStorage.setItem(thing + saveSlot,JSON.stringify(obj));
     }
 
     function appendThing(thing, obj) {
@@ -698,7 +713,8 @@
     }
 
     function loadThing(thing) {
-        var list =  JSON.parse(localStorage.getItem(thing));
+        let saveSlot = $('#saveSlot').val();
+        let list =  JSON.parse(localStorage.getItem(thing + saveSlot));
         if(!list){
             list = [];
         }
@@ -706,7 +722,8 @@
     }
 
     function deleteThing(thing) {
-        localStorage.removeItem(thing);
+        let saveSlot = $('#saveSlot').val();
+        localStorage.removeItem(thing + saveSlot);
     }
 
     function removeFromThing(thing, name) {
